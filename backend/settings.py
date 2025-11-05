@@ -43,6 +43,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://spotter-fe-one.vercel.app"
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://astonishing-contentment-production-dea3.up.railway.app'
+]
 
 
 MIDDLEWARE = [

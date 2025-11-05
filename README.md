@@ -30,10 +30,10 @@ It returns route data, stops, and daily log events.
    pip install -r requirements.txt
    ```
 
-4. Set your API key:
+4. Set your API key in env file:
 
    ```bash
-   export ORS_API_KEY="your_openrouteservice_key"
+   DJANGO_SECRET_KEY="your_openrouteservice_key"
    ```
 
 5. Run migrations:

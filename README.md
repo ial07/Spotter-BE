@@ -1,4 +1,4 @@
-# Trip Planner API (Django + DRF)
+# HOS Trip API (Django)
 
 ## Overview
 

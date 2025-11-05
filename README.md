@@ -1,175 +1,106 @@
-PROJECT: Backend — Trip Planner & HOS Log (Django + DRF)
+# Trip Planner API (Django + DRF)
 
-OVERVIEW
-This backend provides one primary endpoint to calculate truck trips and generate HOS logbooks.
-It returns route data, intermediate stops (pickup, rest, fuel, dropoff), and daily log events.
+## Overview
 
-REQUIREMENTS
+This backend calculates trip routes and generates HOS (Hours of Service) logs based on given trip details.
+It returns route data, stops, and daily log events.
 
-Python 3.10+
+---
 
-pip
+## Setup
 
-Virtual environment (recommended)
+1. Clone the repo:
 
-OpenRouteService API key (set as ORS_API_KEY in environment)
+   ```bash
+   git clone <repo-url>
+   cd <repo-folder>
+   ```
 
-PostgreSQL or default SQLite (for local dev)
+2. Create a virtual environment:
 
-INSTALLATION (local)
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate   # mac/linux
+   .venv\Scripts\activate      # windows
+   ```
 
-Clone repo to your main directory:
-git clone <repo-url>
+3. Install dependencies:
 
-Change directory:
-cd <repo-folder>
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-Create and activate virtualenv:
-python -m venv .venv
-source .venv/bin/activate (mac/linux)
-.venv\Scripts\activate (windows)
+4. Set your API key:
 
-Install dependencies:
-pip install -r requirements.txt
+   ```bash
+   export ORS_API_KEY="your_openrouteservice_key"
+   ```
 
-Set environment variables:
-export ORS_API_KEY="your_openrouteservice_key" (mac/linux)
-set ORS_API_KEY="your_openrouteservice_key" (windows)
+5. Run migrations:
 
-Run migrations:
-python manage.py migrate
+   ```bash
+   python manage.py migrate
+   ```
 
-(Optional) Create superuser:
-python manage.py createsuperuser
+6. Start the server:
 
-Start development server:
-python manage.py runserver localhost:8000
+   ```bash
+   python manage.py runserver
+   ```
 
-CORS & SESSIONS (local dev)
+---
 
-If you use a separate React dev server (e.g., http://localhost:5173
-), set:
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
-CORS_ALLOW_CREDENTIALS = True
+## API Usage
 
-SESSION_COOKIE_SAMESITE = "Lax" and SESSION_COOKIE_SECURE = False for local HTTP testing.
+**Endpoint:**
+`POST http://localhost:8000/api/calculate-trip/`
 
-USING THE API (POSTMAN / CURL / FRONTEND)
-Endpoint:
-[POST] http://localhost:8000/api/calculate-trip/
+**Request Body:**
 
-Request body (JSON):
+```json
 {
-"currentLocation": "-74.1724, 40.7357",
-"pickupLocation": "-73.9250, 40.8500",
-"dropoffLocation": "-71.0589, 42.3601",
-"currentCycleUsed": 45.5
+  "currentLocation": "-74.1724, 40.7357",
+  "pickupLocation": "-73.9250, 40.8500",
+  "dropoffLocation": "-71.0589, 42.3601",
+  "currentCycleUsed": 45.5
 }
+```
 
-cURL example:
-curl -X POST "http://localhost:8000/api/calculate-trip/
-"
--H "Content-Type: application/json"
--d '{"currentLocation":"-74.1724, 40.7357","pickupLocation":"-73.9250, 40.8500","dropoffLocation":"-71.0589, 42.3601","currentCycleUsed":45.5}'
---cookie-jar cookies.txt --cookie cookies.txt
+**Example (cURL):**
 
-Axios example (React):
-const api = axios.create({
-baseURL: "http://localhost:8000/api
-",
-withCredentials: true,
-headers: { "Content-Type": "application/json" },
-});
-const response = await api.post("/calculate-trip/", payload);
+```bash
+curl -X POST "http://localhost:8000/api/calculate-trip/" \
+ -H "Content-Type: application/json" \
+ -d '{"currentLocation":"-74.1724, 40.7357","pickupLocation":"-73.9250, 40.8500","dropoffLocation":"-71.0589, 42.3601","currentCycleUsed":45.5}'
+```
 
-Notes for frontend:
+---
 
-Use baseURL with "http://localhost:8000
-" (use localhost, not 127.0.0.1) to keep cookie behavior consistent.
+## Notes
 
-If you rely on sessions for guest users, keep withCredentials: true in axios and enable CORS_ALLOW_CREDENTIALS on backend.
+* Use **localhost** instead of 127.0.0.1 to keep cookies consistent.
+* Enable `CORS_ALLOW_CREDENTIALS = True` in Django settings for React integration.
+* Make sure `withCredentials: true` is set in Axios.
 
-SUCCESSFUL RESPONSE (overview)
-Response JSON contains:
+---
 
-routeData:
+## Response
 
-deadhead_miles, transport_miles, total_miles
+Returns:
 
-total_driving_hours
+* Route info (miles, hours, required days)
+* Stops (pickup, rest, fuel, dropoff)
+* Daily HOS logs
 
-required_days
+---
 
-route_geometry: [deadhead_geometry, transport_geometry] (polylines)
+## Deployment Tips
 
-stops: array of objects {lat, lon, type, description, duration_hours}
+* Use HTTPS and production-ready settings:
 
-logbookEvents: array of daily logs
-
-each day has { day: int, events: [ {status, start_time, duration_hours, notes} ] }
-
-COMMON ISSUES & TROUBLESHOOTING
-
-Empty or invalid coordinates:
-
-Ensure coordinates are "lon,lat" and numeric.
-
-The API validates via regex and returns 400 if invalid.
-
-ORS errors:
-
-Check ORS_API_KEY, network, and route accessibility.
-
-Session not persisting with React:
-
-Use localhost consistently.
-
-Enable CORS_ALLOW_CREDENTIALS = True.
-
-Set withCredentials: true in axios.
-
-Ensure browser allows cookies for localhost.
-
-Session key still None:
-
-Confirm SessionMiddleware is in MIDDLEWARE and corsheaders.middleware.CorsMiddleware appears before SessionMiddleware.
-
-You can force session creation in view: request.session.create()
-
-EXTENSIONS & DEPLOYMENT NOTES
-
-For production, use a proper WSGI/ASGI host (Railway/Render) and HTTPS. Then set:
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SAMESITE = "None"
-
-Replace OpenRouteService free key with a production account as needed.
-
-Use Postgres for production; update DATABASES in settings.
-
-CODE STRUCTURE (quick)
-
-api/views.py: CalculateTripAPIView
-
-services/ors_service.py: wrapper for OpenRouteService
-
-services/hos_service.py: generate_hos_logbook
-
-utils/helpers.py: parse_location_string, format_time_24hr, Stop type
-
-models.py: DriverLogbook model (JSONField logs)
-
-settings.py: CORS, session, ORS_API_KEY config
-
-NEXT STEPS (suggested)
-
-Add automated tests for HOS logic.
-
-Add serialization for DriverLogbook.
-
-Add endpoint to retrieve saved logbook by user/session id.
-
-Add frontend example usage folder or Postman collection.
-
-CONTACT
-If you need help running this locally or want me to prepare a small frontend demo for quick testing, reply with your preferred dev environment and I will provide steps.
+  ```ini
+  SESSION_COOKIE_SECURE = True
+  CSRF_COOKIE_SECURE = True
+  SESSION_COOKIE_SAMESITE = "None"
+  ```
+* Use PostgreSQL for production.

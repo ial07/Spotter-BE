@@ -43,9 +43,9 @@ CORS_ALLOWED_ORIGINS = [
     "https://spotter-fe-one.vercel.app"
 ]
 
-CSRF_TRUSTED_ORIGINS = [
-    'spotter-be-production.up.railway.app'
-]
+# CSRF_TRUSTED_ORIGINS = [
+#     'spotter-be-production.up.railway.app'
+# ]
 
 
 MIDDLEWARE = [
